@@ -1,93 +1,101 @@
 import javax.swing.*;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.awt.event.ActionEvent;
 
 public class LoginScreen extends JFrame {
-
-    private JTextField usernameEmailField;
-    private JPasswordField passwordField;
-    private JButton loginButton, registerButton;
-
     public LoginScreen() {
-        setTitle("BookNest Login");
-        setSize(600, 250);
+        setTitle("BookNest - Login");
+        setSize(400, 350);
         setLocationRelativeTo(null);
-        setLayout(new GridLayout(4, 2, 10, 10));
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        getContentPane().setBackground(new Color(245, 240, 255));
+        setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 
-        add(new JLabel("Email (Customer) or Username (Admin):"));
-        usernameEmailField = new JTextField();
-        add(usernameEmailField);
 
-        add(new JLabel("Password:"));
-        passwordField = new JPasswordField();
-        add(passwordField);
+        JLabel titleLabel = new JLabel("📚 BookNest");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        titleLabel.setForeground(new Color(80, 0, 130));
+        add(Box.createVerticalStrut(20));
+        add(titleLabel);
 
-        loginButton = new JButton("Login");
-        loginButton.addActionListener(e -> authenticateUser());
-        add(new JLabel());
-        add(loginButton);
+        JTextField usernameField = new JTextField();
+        usernameField.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        usernameField.setMaximumSize(new Dimension(300, 35));
+        usernameField.setBorder(BorderFactory.createTitledBorder("Username"));
+        add(Box.createVerticalStrut(20));
+        add(usernameField);
 
-        registerButton = new JButton("Register (Customer)");
-        registerButton.addActionListener(e -> {
-            dispose();
-            new CustomerRegistration().setVisible(true);
+        JComboBox<String> roleCombo = new JComboBox<>(new String[]{"User", "Admin"});
+        roleCombo.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        roleCombo.setMaximumSize(new Dimension(300, 50));
+        roleCombo.setBorder(BorderFactory.createTitledBorder("Login as"));
+        add(Box.createVerticalStrut(10));
+        add(roleCombo);
+
+        JButton loginBtn = new JButton("Login");
+        loginBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loginBtn.setBackground(new Color(102, 0, 204));
+        loginBtn.setForeground(Color.WHITE);
+        loginBtn.setFocusPainted(false);
+        loginBtn.setPreferredSize(new Dimension(120, 40));
+        add(Box.createVerticalStrut(20));
+        add(loginBtn);
+
+        loginBtn.addActionListener((ActionEvent e) -> {
+            String username = usernameField.getText().trim();
+            String role = (String) roleCombo.getSelectedItem();
+
+            if (username.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter your username.");
+                return;
+            }
+
+            dispose(); // Close login window
+
+            if (role.equalsIgnoreCase("Admin")) {
+                // This will open your existing AdminDashboard class (not inner class)
+                new AdminDashboard(username);
+            } else {
+                new CustomerDashboard(username);
+            }
         });
-        add(new JLabel());
-        add(registerButton);
 
         setVisible(true);
     }
 
-    private void authenticateUser() {
-        String userInput = usernameEmailField.getText().trim();
-        String password = new String(passwordField.getPassword()).trim();
+    static class CustomerDashboard extends JFrame {
+        public CustomerDashboard(String username) {
+            setTitle("Browse Books - Welcome " + username);
+            setSize(600, 400);
+            setLocationRelativeTo(null);
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            setLayout(new BorderLayout());
+            getContentPane().setBackground(new Color(147, 112, 219));
 
-        if (userInput.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please fill all fields.");
-            return;
-        }
 
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            // First check admin
-            String adminQuery = "SELECT * FROM admins WHERE username = ? AND password = ?";
-            PreparedStatement adminStmt = conn.prepareStatement(adminQuery);
-            adminStmt.setString(1, userInput);
-            adminStmt.setString(2, password); // For production, hash & compare hashed passwords
+            JLabel welcomeLabel = new JLabel("Welcome, " + username + "!", JLabel.CENTER);
+            welcomeLabel.setFont(new Font("Arial", Font.BOLD, 18));
+            add(welcomeLabel, BorderLayout.NORTH);
 
-            ResultSet adminRs = adminStmt.executeQuery();
-            if (adminRs.next()) {
-                // Admin logged in
-                JOptionPane.showMessageDialog(this, "Welcome Admin!");
-                dispose();
-                new AdminDashboard(userInput).setVisible(true);
-                return;
-            }
+            JTextArea bookList = new JTextArea();
+            bookList.setText("📚 Available Books:\n" +
+                    "1. Introduction to Java\n" +
+                    "2. Object-Oriented Programming\n" +
+                    "3. Data Structures and Algorithms\n" +
+                    "4. Web Development with HTML/CSS/JS\n" +
+                    "5. Database Systems");
+            bookList.setEditable(false);
+            bookList.setFont(new Font("Monospaced", Font.PLAIN, 14));
+            add(new JScrollPane(bookList), BorderLayout.CENTER);
 
-            // Then check customer by email
-            String custQuery = "SELECT * FROM customers WHERE email = ? AND password = ?";
-            PreparedStatement custStmt = conn.prepareStatement(custQuery);
-            custStmt.setString(1, userInput);
-            custStmt.setString(2, password);
-
-            ResultSet custRs = custStmt.executeQuery();
-            if (custRs.next()) {
-                String customerName = custRs.getString("name");
-                JOptionPane.showMessageDialog(this, "Welcome " + customerName + "!");
-                dispose();
-                new CustomerDashboard(customerName).setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "Invalid credentials. Please try again.");
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage());
+            setVisible(true);
         }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(LoginScreen::new);
+        new LoginScreen();
     }
 }
+
