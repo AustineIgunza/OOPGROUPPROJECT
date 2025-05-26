@@ -1,59 +1,92 @@
-public class Book {
-    private int bookId;
+public class book {
+    private String isbn;
     private String title;
     private String author;
-    private String genre;
-    private String category;
+    private String publisher;
     private double price;
-    private int stock;
+    private int stockQuantity;
 
-    public Book(int bookId, String title, String author, String genre, String category, double price, int stock) {
-        this.bookId = bookId;
+
+    public book(String isbn, String title, String author, String publisher, double price, int stockQuantity) {
+        this.isbn = isbn;
         this.title = title;
         this.author = author;
-        this.genre = genre;
-        this.category = category;
+        this.publisher = publisher;
         this.price = price;
-        this.stock = stock;
+        this.stockQuantity = stockQuantity;
     }
 
-    // Getters and Setters
-    public int getBookId() { return bookId; }
-    public void setBookId(int bookId) { this.bookId = bookId; }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public String getIsbn() {
+        return isbn;
+    }
 
-    public String getAuthor() { return author; }
-    public void setAuthor(String author) { this.author = author; }
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
 
-    public String getGenre() { return genre; }
-    public void setGenre(String genre) { this.genre = genre; }
+    public String getTitle() {
+        return title;
+    }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public String getAuthor() {
+        return author;
+    }
 
-    public int getStock() { return stock; }
-    public void setStock(int stock) { this.stock = stock; }
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public int getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
 
     public boolean isInStock() {
-        return stock > 0;
+        return stockQuantity > 0;
     }
 
+    // Reduce stock quantity after purchase
     public void reduceStock(int quantity) {
-        if (quantity <= stock) {
-            stock -= quantity;
+        if (quantity <= stockQuantity) {
+            stockQuantity -= quantity;
         } else {
             System.out.println("Not enough stock to fulfill the order.");
         }
     }
 
-    @Override
-    public String toString() {
-        return String.format("%s by %s | Genre: %s | Category: %s | $%.2f | Stock: %d",
-                title, author, genre, category, price, stock);
+
+    public void displayBookInfo() {
+        System.out.println("Title: " + title);
+        System.out.println("Author: " + author);
+        System.out.println("ISBN: " + isbn);
+        System.out.println("Publisher: " + publisher);
+        System.out.println("Price: $" + price);
+        System.out.println("Stock: " + stockQuantity);
     }
-}
+}{
+        }
