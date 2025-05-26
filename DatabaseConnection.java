@@ -1,61 +1,20 @@
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+package BookNestApp;
 
-public class DatabaseConnection {
-    private static final String URL = "jdbc:mysql://localhost:3306/MyBookstoreDB";
-    private static final String USER = "root";
-    private static final String PASSWORD = "root";
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
+public class DBConnector {
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
-    }
+        String url = "jdbc:mysql://localhost:3306/booknestapp_db"; // Make sure this matches your DB name and port
+        String user = "root";
+        String password = "root"; // Default password for XAMPP is usually empty
 
-    // Fetch all books from DB
-    public static List<Book> getAllBooks() {
-        List<Book> books = new ArrayList<>();
-        String sql = "SELECT * FROM books";
-
-        try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                Book book = new Book(
-                        rs.getInt("book_id"),
-                        rs.getString("title"),
-                        rs.getString("author"),
-                        rs.getString("genre"),
-                        rs.getString("category"),
-                        rs.getDouble("price"),
-                        rs.getInt("stock")
-                );
-                books.add(book);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver"); // Ensures JDBC driver is loaded
+            return DriverManager.getConnection(url, user, password);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("MySQL JDBC Driver not found.", e);
         }
-
-        return books;
-    }
-
-    // Test database connection method
-    public static void testConnection() {
-        try (Connection conn = getConnection()) {
-            if (conn != null && !conn.isClosed()) {
-                System.out.println("Database connection successful!");
-            } else {
-                System.out.println("Failed to connect to the database.");
-            }
-        } catch (SQLException e) {
-            System.out.println("Connection failed! See error below:");
-            e.printStackTrace();
-        }
-    }
-
-    // You can add a main method to run the test standalone
-    public static void main(String[] args) {
-        testConnection();
     }
 }
