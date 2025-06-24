@@ -79,6 +79,7 @@ public class AdminDashboard extends JFrame {
             setLocationRelativeTo(null);
             add(new JLabel("Book Management Panel (to be implemented)", JLabel.CENTER));
             setVisible(true);
+            new ManageBooksFrame().setVisible(true);
         }
     }
 
