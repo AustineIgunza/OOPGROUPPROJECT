@@ -9,7 +9,7 @@ public class ManageCustomersFrame extends JFrame {
 
     public ManageCustomersFrame() {
         setTitle("👥 Manage Customers");
-        setSize(800, 450);
+        setSize(850, 450);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
@@ -28,12 +28,16 @@ public class ManageCustomersFrame extends JFrame {
         scrollPane.setBorder(BorderFactory.createTitledBorder("Customer List"));
         add(scrollPane, BorderLayout.CENTER);
 
+        // Buttons
         JButton banBtn = createStyledButton("🚫 Ban Customer", primaryColor, font);
+        JButton unbanBtn = createStyledButton("✅ Unban Customer", primaryColor, font);
         banBtn.addActionListener(e -> banCustomer());
+        unbanBtn.addActionListener(e -> unbanCustomer());
 
         JPanel bottom = new JPanel(new FlowLayout());
         bottom.setBackground(bg);
         bottom.add(banBtn);
+        bottom.add(unbanBtn);
         add(bottom, BorderLayout.SOUTH);
 
         loadCustomers();
@@ -60,6 +64,22 @@ public class ManageCustomersFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "Customer banned successfully.");
             } else {
                 JOptionPane.showMessageDialog(this, "Failed to ban customer.");
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select a customer.");
+        }
+    }
+
+    private void unbanCustomer() {
+        int selectedRow = customerTable.getSelectedRow();
+        if (selectedRow != -1) {
+            int customerId = Integer.parseInt(customerTableModel.getValueAt(selectedRow, 0).toString());
+            boolean success = DatabaseConnection.updateCustomerStatus(customerId, "Active");
+            if (success) {
+                customerTableModel.setValueAt("Active", selectedRow, 3);
+                JOptionPane.showMessageDialog(this, "Customer unbanned successfully.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to unban customer.");
             }
         } else {
             JOptionPane.showMessageDialog(this, "Please select a customer.");

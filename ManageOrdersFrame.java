@@ -20,6 +20,7 @@ public class ManageOrdersFrame extends JFrame {
 
         getContentPane().setBackground(backgroundColor);
 
+        // Table Setup
         String[] columns = {"Order ID", "Customer", "Book Title", "Quantity", "Status"};
         orderTableModel = new DefaultTableModel(columns, 0);
         orderTable = new JTable(orderTableModel);
@@ -29,19 +30,24 @@ public class ManageOrdersFrame extends JFrame {
         scrollPane.setBorder(BorderFactory.createTitledBorder("Order List"));
         add(scrollPane, BorderLayout.CENTER);
 
+        // Buttons
         JButton updateBtn = createStyledButton("✅ Mark as Shipped", primaryColor, font);
         JButton deleteBtn = createStyledButton("🗑️ Delete Order", primaryColor, font);
+        JButton refreshBtn = createStyledButton("🔄 Refresh", primaryColor, font);
 
         updateBtn.addActionListener(e -> updateOrderStatus());
         deleteBtn.addActionListener(e -> deleteSelectedOrder());
+        refreshBtn.addActionListener(e -> loadOrders());
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
         buttonPanel.setBackground(backgroundColor);
         buttonPanel.add(updateBtn);
         buttonPanel.add(deleteBtn);
+        buttonPanel.add(refreshBtn);
 
         add(buttonPanel, BorderLayout.SOUTH);
 
+        // Load initial data
         loadOrders();
         setVisible(true);
     }

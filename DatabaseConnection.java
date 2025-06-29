@@ -113,13 +113,16 @@ public class DatabaseConnection {
         String sql = "UPDATE orders SET status = 'Shipped' WHERE order_id = ?";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, orderId);
-            return stmt.executeUpdate() > 0;
+            stmt.setString(1, orderId.trim());
+            int affectedRows = stmt.executeUpdate();
+            System.out.println("Updated rows: " + affectedRows); // For debugging
+            return affectedRows > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
+
 
     public static boolean deleteOrder(String orderId) {
         String sql = "DELETE FROM orders WHERE order_id = ?";
@@ -146,6 +149,37 @@ public class DatabaseConnection {
             e.printStackTrace();
         }
     }
+    public static boolean addBook(Book book) {
+        String sql = "INSERT INTO books (title, author, genre, category, price, stock) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, book.getTitle());
+            stmt.setString(2, book.getAuthor());
+            stmt.setString(3, book.getGenre());
+            stmt.setString(4, book.getCategory());
+            stmt.setDouble(5, book.getPrice());
+            stmt.setInt(6, book.getStock());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean deleteBookById(int bookId) {
+        String sql = "DELETE FROM books WHERE book_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, bookId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+
 
     public static void main(String[] args) {
         testConnection();
