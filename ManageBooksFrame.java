@@ -1,111 +1,65 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.List;
 
 public class ManageBooksFrame extends JFrame {
     private DefaultTableModel bookTableModel;
     private JTable bookTable;
 
     public ManageBooksFrame() {
-        setTitle("Manage Books");
-        setSize(800, 400);
+        setTitle("📚 Manage Books");
+        setSize(850, 450);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout(15, 15));
 
-        // Columns: ISBN, Title, Author, Price
-        String[] columns = {"ISBN", "Title", "Author", "Price"};
+        Font font = new Font("Segoe UI", Font.PLAIN, 15);
+        Color primary = new Color(76, 175, 80);
+        Color bg = new Color(240, 255, 240);
+
+        getContentPane().setBackground(bg);
+
+        String[] columns = {"ID", "Title", "Author", "Genre", "Category", "Price", "Stock"};
         bookTableModel = new DefaultTableModel(columns, 0);
         bookTable = new JTable(bookTableModel);
+        bookTable.setFont(font);
+        bookTable.setRowHeight(22);
         JScrollPane scrollPane = new JScrollPane(bookTable);
-
-        // Buttons
-        JButton addBtn = new JButton("Add Book");
-        JButton editBtn = new JButton("Edit Book");
-        JButton deleteBtn = new JButton("Delete Book");
-
-        addBtn.addActionListener(e -> showAddBookDialog());
-        editBtn.addActionListener(e -> showEditBookDialog());
-        deleteBtn.addActionListener(e -> deleteSelectedBook());
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(addBtn);
-        buttonPanel.add(editBtn);
-        buttonPanel.add(deleteBtn);
-
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Book Inventory"));
         add(scrollPane, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
 
+        JButton refreshBtn = createStyledButton("🔄 Refresh", primary, font);
+        refreshBtn.addActionListener(e -> loadBooks());
+
+        JPanel panel = new JPanel(new FlowLayout());
+        panel.setBackground(bg);
+        panel.add(refreshBtn);
+        add(panel, BorderLayout.SOUTH);
+
+        loadBooks();
         setVisible(true);
     }
 
-    private void showAddBookDialog() {
-        JTextField isbnField = new JTextField();
-        JTextField titleField = new JTextField();
-        JTextField authorField = new JTextField();
-        JTextField priceField = new JTextField();
-
-        Object[] fields = {
-                "ISBN:", isbnField,
-                "Title:", titleField,
-                "Author:", authorField,
-                "Price:", priceField
-        };
-
-        int result = JOptionPane.showConfirmDialog(this, fields, "Add Book", JOptionPane.OK_CANCEL_OPTION);
-        if (result == JOptionPane.OK_OPTION) {
+    private void loadBooks() {
+        bookTableModel.setRowCount(0);
+        List<Book> books = DatabaseConnection.getAllBooks();
+        for (Book book : books) {
             bookTableModel.addRow(new Object[]{
-                    isbnField.getText(),
-                    titleField.getText(),
-                    authorField.getText(),
-                    priceField.getText()
+                    book.getBookId(), book.getTitle(), book.getAuthor(),
+                    book.getGenre(), book.getCategory(), book.getPrice(), book.getStock()
             });
         }
     }
 
-    private void showEditBookDialog() {
-        int selectedRow = bookTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a book to edit.");
-            return;
-        }
-
-        String isbn = (String) bookTableModel.getValueAt(selectedRow, 0);
-        String title = (String) bookTableModel.getValueAt(selectedRow, 1);
-        String author = (String) bookTableModel.getValueAt(selectedRow, 2);
-        String price = (String) bookTableModel.getValueAt(selectedRow, 3);
-
-        JTextField isbnField = new JTextField(isbn);
-        JTextField titleField = new JTextField(title);
-        JTextField authorField = new JTextField(author);
-        JTextField priceField = new JTextField(price);
-
-        Object[] fields = {
-                "ISBN:", isbnField,
-                "Title:", titleField,
-                "Author:", authorField,
-                "Price:", priceField
-        };
-
-        int result = JOptionPane.showConfirmDialog(this, fields, "Edit Book", JOptionPane.OK_CANCEL_OPTION);
-        if (result == JOptionPane.OK_OPTION) {
-            bookTableModel.setValueAt(isbnField.getText(), selectedRow, 0);
-            bookTableModel.setValueAt(titleField.getText(), selectedRow, 1);
-            bookTableModel.setValueAt(authorField.getText(), selectedRow, 2);
-            bookTableModel.setValueAt(priceField.getText(), selectedRow, 3);
-        }
-    }
-
-    private void deleteSelectedBook() {
-        int selectedRow = bookTable.getSelectedRow();
-        if (selectedRow != -1) {
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Are you sure you want to delete this book?",
-                    "Confirm Delete", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                bookTableModel.removeRow(selectedRow);
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Please select a book to delete.");
-        }
+    private JButton createStyledButton(String text, Color color, Font font) {
+        JButton button = new JButton(text);
+        button.setFocusPainted(false);
+        button.setFont(font);
+        button.setBackground(Color.WHITE);
+        button.setForeground(color);
+        button.setBorder(BorderFactory.createLineBorder(color, 2, true));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return button;
     }
 }

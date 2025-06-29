@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.List;
 
 public class ManageOrdersFrame extends JFrame {
     private DefaultTableModel orderTableModel;
@@ -19,7 +20,6 @@ public class ManageOrdersFrame extends JFrame {
 
         getContentPane().setBackground(backgroundColor);
 
-        // Table setup
         String[] columns = {"Order ID", "Customer", "Book Title", "Quantity", "Status"};
         orderTableModel = new DefaultTableModel(columns, 0);
         orderTable = new JTable(orderTableModel);
@@ -29,7 +29,6 @@ public class ManageOrdersFrame extends JFrame {
         scrollPane.setBorder(BorderFactory.createTitledBorder("Order List"));
         add(scrollPane, BorderLayout.CENTER);
 
-        // Buttons
         JButton updateBtn = createStyledButton("✅ Mark as Shipped", primaryColor, font);
         JButton deleteBtn = createStyledButton("🗑️ Delete Order", primaryColor, font);
 
@@ -43,10 +42,7 @@ public class ManageOrdersFrame extends JFrame {
 
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // Sample data
-        orderTableModel.addRow(new Object[]{"ORD1001", "Jane Doe", "Clean Code", "2", "Pending"});
-        orderTableModel.addRow(new Object[]{"ORD1002", "John Smith", "Refactoring", "1", "Pending"});
-
+        loadOrders();
         setVisible(true);
     }
 
@@ -58,24 +54,33 @@ public class ManageOrdersFrame extends JFrame {
         button.setForeground(color);
         button.setBorder(BorderFactory.createLineBorder(color, 2, true));
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(230, 230, 250));
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(Color.WHITE);
-            }
-        });
         return button;
+    }
+
+    private void loadOrders() {
+        orderTableModel.setRowCount(0);
+        List<OrderSummary> orders = DatabaseConnection.getAllOrderSummaries();
+        for (OrderSummary order : orders) {
+            orderTableModel.addRow(new Object[]{
+                    order.getOrderId(),
+                    order.getCustomerName(),
+                    order.getBookTitle(),
+                    order.getQuantity(),
+                    order.getStatus()
+            });
+        }
     }
 
     private void updateOrderStatus() {
         int selectedRow = orderTable.getSelectedRow();
         if (selectedRow != -1) {
-            orderTableModel.setValueAt("Shipped", selectedRow, 4);
-            JOptionPane.showMessageDialog(this, "Order marked as Shipped.");
+            String orderId = orderTableModel.getValueAt(selectedRow, 0).toString();
+            if (DatabaseConnection.markOrderAsShipped(orderId)) {
+                orderTableModel.setValueAt("Shipped", selectedRow, 4);
+                JOptionPane.showMessageDialog(this, "Order marked as Shipped.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to update order status.");
+            }
         } else {
             JOptionPane.showMessageDialog(this, "Please select an order to update.");
         }
@@ -84,11 +89,17 @@ public class ManageOrdersFrame extends JFrame {
     private void deleteSelectedOrder() {
         int selectedRow = orderTable.getSelectedRow();
         if (selectedRow != -1) {
+            String orderId = orderTableModel.getValueAt(selectedRow, 0).toString();
             int confirm = JOptionPane.showConfirmDialog(this,
                     "Are you sure you want to delete this order?",
                     "Confirm Delete", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
-                orderTableModel.removeRow(selectedRow);
+                if (DatabaseConnection.deleteOrder(orderId)) {
+                    orderTableModel.removeRow(selectedRow);
+                    JOptionPane.showMessageDialog(this, "Order deleted.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to delete order.");
+                }
             }
         } else {
             JOptionPane.showMessageDialog(this, "Please select an order to delete.");
