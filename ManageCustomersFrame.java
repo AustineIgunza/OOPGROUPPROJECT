@@ -3,97 +3,78 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class ManageCustomersFrame extends JFrame {
-
     private DefaultTableModel customerTableModel;
     private JTable customerTable;
 
     public ManageCustomersFrame() {
-        setTitle("Manage Customers");
-        setSize(800, 400);
+        setTitle("👥 Manage Customers");
+        setSize(850, 450);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout(15, 15));
 
-        // Table columns
-        String[] columns = {"Name", "Email", "Status"};
+        Color backgroundColor = new Color(245, 245, 255);
+        Color primaryColor = new Color(63, 81, 181);
+        Font font = new Font("Segoe UI", Font.PLAIN, 15);
+
+        getContentPane().setBackground(backgroundColor);
+
+        String[] columns = {"Customer ID", "Name", "Email", "Status"};
         customerTableModel = new DefaultTableModel(columns, 0);
         customerTable = new JTable(customerTableModel);
+        customerTable.setFont(font);
+        customerTable.setRowHeight(24);
         JScrollPane scrollPane = new JScrollPane(customerTable);
-
-        // Buttons
-        JButton addBtn = new JButton("Add Customer");
-        JButton editBtn = new JButton("Edit Customer");
-        JButton banBtn = new JButton("Ban Customer");
-
-        addBtn.addActionListener(e -> showAddCustomerDialog());
-        editBtn.addActionListener(e -> showEditCustomerDialog());
-        banBtn.addActionListener(e -> banSelectedCustomer());
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(addBtn);
-        buttonPanel.add(editBtn);
-        buttonPanel.add(banBtn);
-
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Customer List"));
         add(scrollPane, BorderLayout.CENTER);
+
+        JButton banBtn = createStyledButton("🚫 Ban Customer", primaryColor, font);
+        JButton unbanBtn = createStyledButton("✅ Unban Customer", primaryColor, font);
+
+        banBtn.addActionListener(e -> changeStatus("Banned"));
+        unbanBtn.addActionListener(e -> changeStatus("Active"));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
+        buttonPanel.setBackground(backgroundColor);
+        buttonPanel.add(banBtn);
+        buttonPanel.add(unbanBtn);
+
         add(buttonPanel, BorderLayout.SOUTH);
+
+        // Sample customer
+        customerTableModel.addRow(new Object[]{"CUST001", "Jane Doe", "jane@example.com", "Active"});
 
         setVisible(true);
     }
 
-    private void showAddCustomerDialog() {
-        JTextField nameField = new JTextField();
-        JTextField emailField = new JTextField();
+    private JButton createStyledButton(String text, Color color, Font font) {
+        JButton button = new JButton(text);
+        button.setFocusPainted(false);
+        button.setFont(font);
+        button.setBackground(Color.WHITE);
+        button.setForeground(color);
+        button.setBorder(BorderFactory.createLineBorder(color, 2, true));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        Object[] fields = {
-                "Name:", nameField,
-                "Email:", emailField
-        };
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(new Color(230, 230, 250));
+            }
 
-        int result = JOptionPane.showConfirmDialog(this, fields, "Add Customer", JOptionPane.OK_CANCEL_OPTION);
-        if (result == JOptionPane.OK_OPTION) {
-            customerTableModel.addRow(new Object[]{
-                    nameField.getText(),
-                    emailField.getText(),
-                    "Active"
-            });
-        }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(Color.WHITE);
+            }
+        });
+        return button;
     }
 
-    private void showEditCustomerDialog() {
-        int selectedRow = customerTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a customer to edit.");
-            return;
-        }
-
-        String name = (String) customerTableModel.getValueAt(selectedRow, 0);
-        String email = (String) customerTableModel.getValueAt(selectedRow, 1);
-
-        JTextField nameField = new JTextField(name);
-        JTextField emailField = new JTextField(email);
-
-        Object[] fields = {
-                "Name:", nameField,
-                "Email:", emailField
-        };
-
-        int result = JOptionPane.showConfirmDialog(this, fields, "Edit Customer", JOptionPane.OK_CANCEL_OPTION);
-        if (result == JOptionPane.OK_OPTION) {
-            customerTableModel.setValueAt(nameField.getText(), selectedRow, 0);
-            customerTableModel.setValueAt(emailField.getText(), selectedRow, 1);
-        }
-    }
-
-    private void banSelectedCustomer() {
+    private void changeStatus(String newStatus) {
         int selectedRow = customerTable.getSelectedRow();
         if (selectedRow != -1) {
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Are you sure you want to ban this customer?",
-                    "Confirm Ban", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                customerTableModel.setValueAt("Banned", selectedRow, 2);
-            }
+            customerTableModel.setValueAt(newStatus, selectedRow, 3);
+            JOptionPane.showMessageDialog(this, "Customer status updated to: " + newStatus);
         } else {
-            JOptionPane.showMessageDialog(this, "Please select a customer to ban.");
+            JOptionPane.showMessageDialog(this, "Please select a customer.");
         }
     }
 }

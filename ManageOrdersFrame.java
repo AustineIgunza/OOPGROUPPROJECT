@@ -43,8 +43,9 @@ public class ManageOrdersFrame extends JFrame {
 
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // Sample order
+        // Sample data
         orderTableModel.addRow(new Object[]{"ORD1001", "Jane Doe", "Clean Code", "2", "Pending"});
+        orderTableModel.addRow(new Object[]{"ORD1002", "John Smith", "Refactoring", "1", "Pending"});
 
         setVisible(true);
     }

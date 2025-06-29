@@ -71,35 +71,4 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // Simple stubs for demonstration
-    static class ManageBooksFrame extends JFrame {
-        public ManageBooksFrame() {
-            setTitle("Manage Books");
-            setSize(500, 400);
-            setLocationRelativeTo(null);
-            add(new JLabel("Book Management Panel (to be implemented)", JLabel.CENTER));
-            setVisible(true);
-            new ManageBooksFrame().setVisible(true);
-        }
-    }
-
-    static class ManageCustomersFrame extends JFrame {
-        public ManageCustomersFrame() {
-            setTitle("Manage Customers");
-            setSize(500, 400);
-            setLocationRelativeTo(null);
-            add(new JLabel("Customer Management Panel (to be implemented)", JLabel.CENTER));
-            setVisible(true);
-        }
-    }
-
-    static class ManageOrdersFrame extends JFrame {
-        public ManageOrdersFrame() {
-            setTitle("Manage Orders");
-            setSize(500, 400);
-            setLocationRelativeTo(null);
-            add(new JLabel("Order Management Panel (to be implemented)", JLabel.CENTER));
-            setVisible(true);
-        }
-    }
 }
