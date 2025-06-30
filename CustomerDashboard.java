@@ -3,7 +3,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.List;
 
 public class CustomerDashboard extends JFrame {
     private JTable booksTable;
@@ -32,13 +31,19 @@ public class CustomerDashboard extends JFrame {
         scrollPane.setBorder(BorderFactory.createTitledBorder("Available Books"));
         add(scrollPane, BorderLayout.CENTER);
 
-        JButton buyBtn = new JButton("🛒 Buy Selected Book");
+        JButton buyBtn = new JButton("🛒 Add to Cart");
+        JButton viewCartBtn = new JButton("🧺 View Cart");
+
         buyBtn.setFont(font);
+        viewCartBtn.setFont(font);
+
         buyBtn.addActionListener(e -> buySelectedBook());
+        viewCartBtn.addActionListener(e -> new CartGUI());
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottomPanel.setBackground(bg);
         bottomPanel.add(buyBtn);
+        bottomPanel.add(viewCartBtn);
 
         add(bottomPanel, BorderLayout.SOUTH);
         loadBooks();
@@ -69,13 +74,14 @@ public class CustomerDashboard extends JFrame {
     private void buySelectedBook() {
         int selectedRow = booksTable.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a book to buy.");
+            JOptionPane.showMessageDialog(this, "Please select a book.");
             return;
         }
 
         int modelRow = booksTable.convertRowIndexToModel(selectedRow);
         int bookId = (int) booksTableModel.getValueAt(modelRow, 0);
         String title = (String) booksTableModel.getValueAt(modelRow, 1);
+        String author = (String) booksTableModel.getValueAt(modelRow, 2);
         BigDecimal price = (BigDecimal) booksTableModel.getValueAt(modelRow, 3);
         int stock = (int) booksTableModel.getValueAt(modelRow, 4);
 
@@ -84,88 +90,24 @@ public class CustomerDashboard extends JFrame {
         panel.add(new JLabel("Book: " + title));
         panel.add(new JLabel("Price: $" + price));
         panel.add(new JLabel("Stock: " + stock));
-        panel.add(new JLabel("Enter quantity to buy:"));
+        panel.add(new JLabel("Quantity:"));
         panel.add(quantityField);
 
-        int confirm = JOptionPane.showConfirmDialog(this, panel, "Buy Book", JOptionPane.OK_CANCEL_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, panel, "Add to Cart", JOptionPane.OK_CANCEL_OPTION);
         if (confirm != JOptionPane.OK_OPTION) return;
 
-        int quantity;
         try {
-            quantity = Integer.parseInt(quantityField.getText());
+            int quantity = Integer.parseInt(quantityField.getText());
             if (quantity <= 0 || quantity > stock) {
                 JOptionPane.showMessageDialog(this, "Invalid quantity.");
                 return;
             }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid number.");
-            return;
-        }
 
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            conn.setAutoCommit(false);
-
-            PreparedStatement checkStock = conn.prepareStatement("SELECT stock FROM books WHERE book_id = ?");
-            checkStock.setInt(1, bookId);
-            ResultSet rs = checkStock.executeQuery();
-            if (!rs.next() || rs.getInt("stock") < quantity) {
-                conn.rollback();
-                JOptionPane.showMessageDialog(this, "Insufficient stock. Try again.");
-                return;
-            }
-
-            int customerId = -1;
-            PreparedStatement custStmt = conn.prepareStatement("SELECT customer_id FROM customers WHERE name = ?");
-            custStmt.setString(1, customerName);
-            ResultSet custRs = custStmt.executeQuery();
-            if (custRs.next()) {
-                customerId = custRs.getInt("customer_id");
-            } else {
-                conn.rollback();
-                JOptionPane.showMessageDialog(this, "Customer not found.");
-                return;
-            }
-
-            PreparedStatement orderStmt = conn.prepareStatement(
-                    "INSERT INTO orders (customer_id, order_date, status) VALUES (?, NOW(), 'Pending')",
-                    PreparedStatement.RETURN_GENERATED_KEYS
-            );
-            orderStmt.setInt(1, customerId);
-            orderStmt.executeUpdate();
-
-            ResultSet keys = orderStmt.getGeneratedKeys();
-            int orderId = -1;
-            if (keys.next()) {
-                orderId = keys.getInt(1);
-            } else {
-                conn.rollback();
-                JOptionPane.showMessageDialog(this, "Order creation failed.");
-                return;
-            }
-
-            PreparedStatement itemStmt = conn.prepareStatement(
-                    "INSERT INTO order_items (order_id, book_id, quantity, price) VALUES (?, ?, ?, ?)"
-            );
-            itemStmt.setInt(1, orderId);
-            itemStmt.setInt(2, bookId);
-            itemStmt.setInt(3, quantity);
-            itemStmt.setBigDecimal(4, price);
-            itemStmt.executeUpdate();
-
-            PreparedStatement updateStock = conn.prepareStatement(
-                    "UPDATE books SET stock = stock - ? WHERE book_id = ?"
-            );
-            updateStock.setInt(1, quantity);
-            updateStock.setInt(2, bookId);
-            updateStock.executeUpdate();
-
-            conn.commit();
-            JOptionPane.showMessageDialog(this, "Purchase successful! Order ID: " + orderId);
-            loadBooks();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Transaction failed: " + e.getMessage());
+            Book book = new Book(bookId, title, author, "Unknown", "Unknown", price.doubleValue(), stock);
+            SharedCart.getCart().addItem(book, quantity);
+            JOptionPane.showMessageDialog(this, "Book added to cart.");
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid number entered.");
         }
     }
 }
