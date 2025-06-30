@@ -178,6 +178,24 @@ public class DatabaseConnection {
         }
     }
 
+    public static boolean savePayment(Payment payment) {
+        String sql = "INSERT INTO payments (payment_id, order_id, amount, payment_method, is_successful, payment_time) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, payment.getPaymentId());
+            ps.setInt(2, payment.getOrderId());
+            ps.setDouble(3, payment.getAmount());
+            ps.setString(4, payment.getPaymentMethod());
+            ps.setBoolean(5, payment.isSuccessful());
+            ps.setTimestamp(6, java.sql.Timestamp.valueOf(payment.getPaymentTime()));
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            System.err.println("❌ Error saving payment: " + e.getMessage());
+            return false;
+        }
+    }
 
 
 

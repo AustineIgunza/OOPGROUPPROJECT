@@ -34,7 +34,6 @@ public class LoginScreen extends JFrame {
         registerButton = new JButton("Register (Customer)");
         registerButton.addActionListener(e -> {
             dispose();
-
             new CustomerRegistration().setVisible(true);
         });
         add(new JLabel());
@@ -53,22 +52,21 @@ public class LoginScreen extends JFrame {
         }
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            // First check admin
+            // Check admin first
             String adminQuery = "SELECT * FROM admins WHERE username = ? AND password = ?";
             PreparedStatement adminStmt = conn.prepareStatement(adminQuery);
             adminStmt.setString(1, userInput);
-            adminStmt.setString(2, password); // For production, hash & compare hashed passwords
+            adminStmt.setString(2, password);
 
             ResultSet adminRs = adminStmt.executeQuery();
             if (adminRs.next()) {
-                // Admin logged in
                 JOptionPane.showMessageDialog(this, "Welcome Admin!");
                 dispose();
                 new AdminDashboard(userInput).setVisible(true);
                 return;
             }
 
-            // Then check customer by email
+            // Check customer
             String custQuery = "SELECT * FROM customers WHERE email = ? AND password = ?";
             PreparedStatement custStmt = conn.prepareStatement(custQuery);
             custStmt.setString(1, userInput);
@@ -76,7 +74,12 @@ public class LoginScreen extends JFrame {
 
             ResultSet custRs = custStmt.executeQuery();
             if (custRs.next()) {
+                int customerId = custRs.getInt("customer_id");
                 String customerName = custRs.getString("name");
+
+                // Set customerId in context for checkout
+                CartContext.setCustomerId(customerId);
+
                 JOptionPane.showMessageDialog(this, "Welcome " + customerName + "!");
                 dispose();
                 new CustomerDashboard(customerName).setVisible(true);

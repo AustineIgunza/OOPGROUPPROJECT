@@ -32,18 +32,25 @@ public class CustomerDashboard extends JFrame {
         add(scrollPane, BorderLayout.CENTER);
 
         JButton buyBtn = new JButton("🛒 Add to Cart");
-        JButton viewCartBtn = new JButton("🧺 View Cart");
+        JButton viewCartBtn = new JButton("🛍️ View Cart");
+        JButton logoutBtn = new JButton("🚪 Logout"); // ✅ Added Logout Button
 
         buyBtn.setFont(font);
         viewCartBtn.setFont(font);
+        logoutBtn.setFont(font);
 
-        buyBtn.addActionListener(e -> buySelectedBook());
+        buyBtn.addActionListener(e -> addToCart());
         viewCartBtn.addActionListener(e -> new CartGUI());
+        logoutBtn.addActionListener(e -> {
+            dispose(); // Close dashboard
+            new LoginScreen(); // ✅ Go back to login screen
+        });
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottomPanel.setBackground(bg);
         bottomPanel.add(buyBtn);
         bottomPanel.add(viewCartBtn);
+        bottomPanel.add(logoutBtn); // ✅ Add Logout to Panel
 
         add(bottomPanel, BorderLayout.SOUTH);
         loadBooks();
@@ -71,26 +78,24 @@ public class CustomerDashboard extends JFrame {
         }
     }
 
-    private void buySelectedBook() {
+    private void addToCart() {
         int selectedRow = booksTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "Please select a book.");
             return;
         }
 
-        int modelRow = booksTable.convertRowIndexToModel(selectedRow);
-        int bookId = (int) booksTableModel.getValueAt(modelRow, 0);
-        String title = (String) booksTableModel.getValueAt(modelRow, 1);
-        String author = (String) booksTableModel.getValueAt(modelRow, 2);
-        BigDecimal price = (BigDecimal) booksTableModel.getValueAt(modelRow, 3);
-        int stock = (int) booksTableModel.getValueAt(modelRow, 4);
+        int bookId = (int) booksTableModel.getValueAt(selectedRow, 0);
+        String title = (String) booksTableModel.getValueAt(selectedRow, 1);
+        String author = (String) booksTableModel.getValueAt(selectedRow, 2);
+        BigDecimal price = (BigDecimal) booksTableModel.getValueAt(selectedRow, 3);
+        int stock = (int) booksTableModel.getValueAt(selectedRow, 4);
 
         JTextField quantityField = new JTextField("1");
         JPanel panel = new JPanel(new GridLayout(0, 1));
         panel.add(new JLabel("Book: " + title));
-        panel.add(new JLabel("Price: $" + price));
         panel.add(new JLabel("Stock: " + stock));
-        panel.add(new JLabel("Quantity:"));
+        panel.add(new JLabel("Quantity to Add:"));
         panel.add(quantityField);
 
         int confirm = JOptionPane.showConfirmDialog(this, panel, "Add to Cart", JOptionPane.OK_CANCEL_OPTION);
@@ -103,11 +108,33 @@ public class CustomerDashboard extends JFrame {
                 return;
             }
 
-            Book book = new Book(bookId, title, author, "Unknown", "Unknown", price.doubleValue(), stock);
-            SharedCart.getCart().addItem(book, quantity);
-            JOptionPane.showMessageDialog(this, "Book added to cart.");
+            Book book = new Book(bookId, title, author, "Genre", "Category", price.doubleValue(), stock);
+            ShoppingCart cart = CartContext.getCart();
+            cart.addItem(book, quantity);
+
+            try (Connection conn = DatabaseConnection.getConnection()) {
+                PreparedStatement updateStock = conn.prepareStatement(
+                        "UPDATE books SET stock = stock - ? WHERE book_id = ? AND stock >= ?"
+                );
+                updateStock.setInt(1, quantity);
+                updateStock.setInt(2, bookId);
+                updateStock.setInt(3, quantity);
+
+                int updated = updateStock.executeUpdate();
+                if (updated == 0) {
+                    JOptionPane.showMessageDialog(this, "Failed to update stock.");
+                    return;
+                }
+            }
+
+            loadBooks();
+            JOptionPane.showMessageDialog(this, "Book added to cart and stock updated!");
+
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid number entered.");
+            JOptionPane.showMessageDialog(this, "Invalid quantity entered.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage());
         }
     }
 }
