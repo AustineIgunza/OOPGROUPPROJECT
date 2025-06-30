@@ -11,7 +11,6 @@ public class ShoppingCart {
             if (item.getBook().getBookId() == book.getBookId()) {
                 item.setQuantity(item.getQuantity() + quantity);
                 return;
-
             }
         }
         items.add(new CartItem(book, quantity));
@@ -58,12 +57,7 @@ public class ShoppingCart {
         return summary.toString();
     }
 
-    // ADDED: Method to return cart items directly
-    public List<CartItem> viewCart() {
-        return items;
-    }
-
-    public int getItemCount(){
+    public int getItemCount() {
         return items.size();
     }
 }
