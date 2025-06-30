@@ -12,15 +12,19 @@ public class CustomerDashboard extends JFrame {
     public CustomerDashboard(String customerName) {
         this.customerName = customerName;
         setTitle("Welcome, " + customerName);
-        setSize(900, 500);
+        setSize(1000, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout(15, 15));
 
         Font font = new Font("Segoe UI", Font.PLAIN, 15);
         Color bg = new Color(250, 250, 255);
         getContentPane().setBackground(bg);
 
+        // Tabbed panel
+        JTabbedPane tabs = new JTabbedPane();
+
+        // === Browse Books Panel ===
+        JPanel browsePanel = new JPanel(new BorderLayout(10, 10));
         String[] columns = {"Book ID", "Title", "Author", "Price", "Stock"};
         booksTableModel = new DefaultTableModel(columns, 0);
         booksTable = new JTable(booksTableModel);
@@ -29,11 +33,11 @@ public class CustomerDashboard extends JFrame {
 
         JScrollPane scrollPane = new JScrollPane(booksTable);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Available Books"));
-        add(scrollPane, BorderLayout.CENTER);
+        browsePanel.add(scrollPane, BorderLayout.CENTER);
 
         JButton buyBtn = new JButton("🛒 Add to Cart");
         JButton viewCartBtn = new JButton("🛍️ View Cart");
-        JButton logoutBtn = new JButton("🚪 Logout"); // ✅ Added Logout Button
+        JButton logoutBtn = new JButton("🚪 Logout");
 
         buyBtn.setFont(font);
         viewCartBtn.setFont(font);
@@ -42,17 +46,23 @@ public class CustomerDashboard extends JFrame {
         buyBtn.addActionListener(e -> addToCart());
         viewCartBtn.addActionListener(e -> new CartGUI());
         logoutBtn.addActionListener(e -> {
-            dispose(); // Close dashboard
-            new LoginScreen(); // ✅ Go back to login screen
+            dispose();
+            new LoginScreen();
         });
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottomPanel.setBackground(bg);
         bottomPanel.add(buyBtn);
         bottomPanel.add(viewCartBtn);
-        bottomPanel.add(logoutBtn); // ✅ Add Logout to Panel
+        bottomPanel.add(logoutBtn);
 
-        add(bottomPanel, BorderLayout.SOUTH);
+        browsePanel.add(bottomPanel, BorderLayout.SOUTH);
+        tabs.addTab("📚 Browse", browsePanel);
+
+        // === Search Panel ===
+        tabs.addTab("🔍 Search", new BookSearchPanel());
+
+        add(tabs);
         loadBooks();
         setVisible(true);
     }
@@ -112,6 +122,7 @@ public class CustomerDashboard extends JFrame {
             ShoppingCart cart = CartContext.getCart();
             cart.addItem(book, quantity);
 
+            // Update stock
             try (Connection conn = DatabaseConnection.getConnection()) {
                 PreparedStatement updateStock = conn.prepareStatement(
                         "UPDATE books SET stock = stock - ? WHERE book_id = ? AND stock >= ?"
@@ -119,19 +130,19 @@ public class CustomerDashboard extends JFrame {
                 updateStock.setInt(1, quantity);
                 updateStock.setInt(2, bookId);
                 updateStock.setInt(3, quantity);
-
                 int updated = updateStock.executeUpdate();
+
                 if (updated == 0) {
-                    JOptionPane.showMessageDialog(this, "Failed to update stock.");
+                    JOptionPane.showMessageDialog(this, "Stock update failed.");
                     return;
                 }
             }
 
-            loadBooks();
-            JOptionPane.showMessageDialog(this, "Book added to cart and stock updated!");
+            loadBooks(); // Refresh table
+            JOptionPane.showMessageDialog(this, "Book added to cart!");
 
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid quantity entered.");
+            JOptionPane.showMessageDialog(this, "Invalid quantity.");
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage());
